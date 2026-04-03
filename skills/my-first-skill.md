@@ -1,6 +1,6 @@
 # My first skill
 
-A minimal skill template. Copy this directory and modify it for your needs.
+A minimal skill template. Copy this file and modify it for your needs.
 
 ## What this skill does
 
@@ -27,7 +27,7 @@ When invoked with `/my-first-skill`, Claude will:
 
 ## How to customize this skill
 
-1. Copy this file: `cp my-first-skill.md your-skill-name.md`
+1. Copy this file: `cp skills/my-first-skill.md skills/your-skill-name.md`
 2. Rename to describe your skill's purpose
 3. Edit the "What this skill does" section
 4. Replace the rules with your own
