@@ -27,7 +27,7 @@ When invoked with `/my-first-skill`, Claude will:
 
 ## How to customize this skill
 
-1. Copy this folder: `cp -r my-first-skill your-skill-name`
+1. Copy this file: `cp my-first-skill.md your-skill-name.md`
 2. Rename to describe your skill's purpose
 3. Edit the "What this skill does" section
 4. Replace the rules with your own
