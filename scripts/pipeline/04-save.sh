@@ -33,6 +33,10 @@ if [ ! -d "$IN_DIR" ]; then
     exit 1
 fi
 
+if [ -L "$OUT_DIR" ]; then
+    echo "04-save: output is a published snapshot; use run-all.sh or a separate workspace" >&2
+    exit 1
+fi
 mkdir -p "$OUT_DIR"
 TODAY="$(date +%Y-%m-%d)"
 OUT_FILE="$OUT_DIR/digest-$TODAY.md"

@@ -23,6 +23,11 @@ on:
 permissions:
   contents: write
 
+# One publisher per branch; finish an active run before starting the next.
+concurrency:
+  group: weekly-digest-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   digest:
     runs-on: ubuntu-latest
@@ -30,13 +35,13 @@ jobs:
     steps:
       # 1. Pull the repo down onto the runner.
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # 2. Install Node so we can install the Claude Code CLI.
       - name: setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
 
       # 3. Install the Claude Code CLI globally on the runner.
       - name: install claude code
@@ -60,9 +65,8 @@ jobs:
           fi
 
       # 5a. Real run: secret is set, run the full pipeline. The pipeline
-      #     writes into scripts/pipeline/work/ and scripts/pipeline/output/.
-      #     After it finishes, copy the digest to the repo-root output/
-      #     folder so it lives in one consistent place regardless of path.
+      #     publishes a complete snapshot at scripts/pipeline/output/.
+      #     Git's commit records its digest and manifest as one artifact set.
       - name: run pipeline
         if: steps.check_key.outputs.has_key == 'true'
         env:
@@ -70,14 +74,10 @@ jobs:
         run: |
           chmod +x scripts/pipeline/*.sh
           scripts/pipeline/run-all.sh
-          mkdir -p output
-          # Copy every digest the pipeline produced into the root output/.
-          if ls scripts/pipeline/output/*.md >/dev/null 2>&1; then
-            cp scripts/pipeline/output/*.md output/
-          else
-            echo "run-pipeline: no digest produced by stage 04" >&2
-            exit 1
-          fi
+          # This generated directory represents the current run, not a history
+          # of older digests. The pipeline has validated the source snapshot.
+          rm -rf output
+          cp -R -L scripts/pipeline/output output
 
       # 5b. Stub run: secret is missing, write a stable placeholder.
       #     "Stable" matters — same content every run — so the next step
@@ -110,7 +110,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add output/
+          git add --all output/
           if git diff --staged --quiet; then
             echo "no changes to commit"
             exit 0
