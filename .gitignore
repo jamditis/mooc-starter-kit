@@ -6,3 +6,11 @@ Thumbs.db
 *.swo
 *~
 summaries/
+
+# Isolated pipeline runs and published pointer (may contain source content)
+scripts/pipeline/.runs/
+scripts/pipeline/.run-lock/
+scripts/pipeline/.output-*
+scripts/pipeline/output
+scripts/pipeline/work/
+__pycache__/

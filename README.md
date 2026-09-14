@@ -1,5 +1,7 @@
 # Advanced prompt engineering for journalists — starter kit
 
+Track active work in [MOOC starter kit maintenance](https://github.com/users/jamditis/projects/26).
+
 A starter repo for the [Knight Center](https://knightcenter.utexas.edu/) MOOC on using AI coding tools from the command line. Fork this repo, clone your fork, `cd` into it, and run `claude`. Everything you need for the four modules is already here.
 
 **Course site:** [mooc.amditis.tech](https://mooc.amditis.tech)

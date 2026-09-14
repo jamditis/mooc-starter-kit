@@ -1,5 +1,7 @@
 # Pipeline scripts
 
+Track active work in [MOOC starter kit maintenance](https://github.com/users/jamditis/projects/26).
+
 A staged journalism pipeline: fetch → clean → process → save. Each stage is its own bash script in this folder, and each one only does one thing.
 
 ## The stages
@@ -11,7 +13,7 @@ A staged journalism pipeline: fetch → clean → process → save. Each stage i
 | 3 | `03-process.sh` | the model call and prompt shape | `./work/02-clean/` | `./work/03-processed/` |
 | 4 | `04-save.sh` | final artifact and naming | `./work/03-processed/` | `./output/digest-YYYY-MM-DD.md` |
 
-Stages communicate through files in `./work/` (staging) and `./output/` (final). No global variables, no shared state, no surprises.
+Stages communicate through files in `./work/` (staging) and `./output/` (final), relative to their working directory. The full runner gives each run its own working directory; standalone stages use your current directory.
 
 ## Why stages
 
@@ -35,15 +37,34 @@ That runs 01 → 02 → 03 → 04 against `sample-docs/` by default. Pass a diff
 ./run-all.sh /path/to/my/beat-docs
 ```
 
-Or run a single stage to debug it:
+The full runner requires Bash, Perl, Python 3.8 or newer, the Claude CLI, and a filesystem that supports symlinks (Linux or macOS). Each run uses `.runs/run.*` and validates artifact names and content hashes after each stage. A completed run atomically replaces the `output` symlink. The published directory contains one digest and `manifest.json`, which records the run ID, filenames, byte counts, and SHA-256 hashes for each stage.
+
+Source files must have distinct stems: `article.md` and `article.txt` in the same input set are rejected before processing. Model output must be a JSON object with a string summary and arrays for facts, entities, and unverified claims.
+
+A failed stage leaves the previous publication unchanged. A competing run fails with `another run` before processing documents. The `.run-lock` directory is removed on ordinary exit. After an uncatchable termination, confirm that the previous runner and its children have stopped before removing the stale lock. Its `run-id` file identifies the workspace it owns.
+
+If an older version created a real `output/` directory, move it to a backup before the first full run. The runner stops rather than overwriting it. Previous and failed runs remain in `.runs/` for diagnosis. Remove only inactive runs you no longer need, and keep the run referenced by `output`. These directories can contain source documents and model results; they stay ignored by Git.
+
+The weekly workflow copies the validated digest and manifest to the repository-root `output/` and commits them together. That directory holds the current result. Older committed digests remain in Git history. Workflow publishers are serialized per branch.
+
+Or run individual stages from a separate scratch directory:
 
 ```bash
-./01-fetch.sh
-./02-clean.sh
+PIPELINE_DIR="$PWD"
+mkdir -p /tmp/my-pipeline-example
+cd /tmp/my-pipeline-example
+bash "$PIPELINE_DIR/01-fetch.sh"
+bash "$PIPELINE_DIR/02-clean.sh"
 # inspect ./work/02-clean/ here
-./03-process.sh
-./04-save.sh
+bash "$PIPELINE_DIR/03-process.sh"
+bash "$PIPELINE_DIR/04-save.sh"
 ```
+
+Standalone stages are for manual experiments. They do not run validation or atomic publication. `04-save.sh` refuses to write through the full runner's published `output` symlink.
+
+## Tests without a model
+
+From the repository root, run `python3 -m unittest discover -s tests -v`. The suite uses a fake `claude` executable and temporary directories. It checks failures, overlap, removed inputs, manifest hashes, filename collisions, changed prior-stage artifacts, and publication ownership. It never calls a real model.
 
 ## Test small
 
